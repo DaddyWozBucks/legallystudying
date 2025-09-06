@@ -65,14 +65,28 @@ export default function DocumentUpload({ onUploadSuccess }: DocumentUploadProps)
     setError(null);
 
     try {
+      const uploadedDocuments = [];
       for (const file of selectedFiles) {
-        await documentApi.uploadDocument(
+        const result = await documentApi.uploadDocument(
           file, 
           undefined, // parser plugin id
           selectedCourse || undefined,
           selectedWeek
         );
+        uploadedDocuments.push(result);
       }
+      
+      // Auto-generate summaries for uploaded documents
+      for (const doc of uploadedDocuments) {
+        try {
+          await documentApi.summarizeDocument(doc.id);
+          console.log(`Summary generated for document ${doc.id}`);
+        } catch (err) {
+          console.error(`Failed to generate summary for document ${doc.id}:`, err);
+          // Continue with other documents even if one fails
+        }
+      }
+      
       setSelectedFiles([]);
       setSelectedCourse('');
       setSelectedWeek(undefined);

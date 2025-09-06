@@ -35,7 +35,7 @@ export default function DocumentDetail({
   onGenerateFlashcards,
   onDocumentDeleted 
 }: DocumentDetailProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'summary' | 'qa' | 'flashcards'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'text' | 'summary' | 'qa' | 'flashcards'>('overview');
   const [summary, setSummary] = useState<any>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
@@ -46,13 +46,24 @@ export default function DocumentDetail({
 
   // Load saved summary when component mounts or document changes
   useEffect(() => {
-    const savedSummary = summaryStore.getSummary(document.id);
-    if (savedSummary) {
-      setSummary(savedSummary);
+    // First check if document has a saved summary in the database
+    if (document.summary) {
+      setSummary({
+        document_id: document.id,
+        summary: document.summary,
+        key_points: document.key_points || [],
+        generated_at: document.updated_at // Use updated_at as a proxy for when summary was saved
+      });
     } else {
-      setSummary(null);
+      // Otherwise check the local store
+      const savedSummary = summaryStore.getSummary(document.id);
+      if (savedSummary) {
+        setSummary(savedSummary);
+      } else {
+        setSummary(null);
+      }
     }
-  }, [document.id]);
+  }, [document.id, document.summary]);
 
   const handleGenerateSummary = async (regenerate: boolean = false) => {
     setLoadingSummary(true);
@@ -69,6 +80,14 @@ export default function DocumentDetail({
       setSummary(result);
       // Save summary to store
       summaryStore.setSummary(document.id, result);
+      
+      // Refresh the document to get the saved summary from database
+      const updatedDoc = await documentApi.getDocument(document.id);
+      if (updatedDoc.summary) {
+        // Update the document object with the saved summary
+        document.summary = updatedDoc.summary;
+        document.key_points = updatedDoc.key_points;
+      }
     } catch (error: any) {
       console.error('Failed to generate summary:', error);
       setSummaryError(error.response?.data?.detail || 'Failed to generate summary. Please try again.');
@@ -180,6 +199,19 @@ export default function DocumentDetail({
             </div>
           </button>
           <button
+            onClick={() => setActiveTab('text')}
+            className={`px-4 py-3 font-medium text-sm border-b-2 transition-colors ${
+              activeTab === 'text'
+                ? 'text-blue-600 border-blue-600'
+                : 'text-gray-500 border-transparent hover:text-gray-700'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <FiFileText className="w-4 h-4" />
+              Text
+            </div>
+          </button>
+          <button
             onClick={() => setActiveTab('summary')}
             className={`px-4 py-3 font-medium text-sm border-b-2 transition-colors ${
               activeTab === 'summary'
@@ -262,6 +294,48 @@ export default function DocumentDetail({
                 <p className="text-sm text-red-800">
                   <strong>Error:</strong> {document.error_message}
                 </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'text' && (
+          <div className="space-y-4">
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-3">Extracted Text</h3>
+              {document.raw_text ? (
+                <div className="bg-white rounded-lg border border-gray-200 p-4 max-h-96 overflow-y-auto">
+                  <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono">
+                    {document.raw_text}
+                  </pre>
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-white rounded-lg border border-gray-200">
+                  <FiFileText className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">No text extracted from this document</p>
+                </div>
+              )}
+            </div>
+            
+            {document.summary && (
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-blue-900 mb-3">Saved Summary</h3>
+                <div className="bg-white rounded-lg border border-blue-200 p-4">
+                  <p className="text-sm text-gray-800 whitespace-pre-wrap">{document.summary}</p>
+                  {document.key_points && document.key_points.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                      <h4 className="text-xs font-medium text-gray-700 mb-2">Key Points:</h4>
+                      <ul className="space-y-1">
+                        {document.key_points.map((point: string, index: number) => (
+                          <li key={index} className="text-sm text-gray-600 flex items-start">
+                            <span className="text-blue-500 mr-2">•</span>
+                            <span>{point}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

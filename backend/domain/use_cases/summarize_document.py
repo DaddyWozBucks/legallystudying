@@ -207,6 +207,12 @@ KEY POINTS:
             summary_text = response
             key_points = ["Summary generated without structured format"]
         
+        # Save the summary and key points to the document
+        document.summary = summary_text
+        document.key_points = key_points
+        await self.document_repo.update_document(document)
+        logger.info(f"Saved summary for document {document_id}")
+        
         return DocumentSummary(
             content=summary_text,
             key_points=key_points,

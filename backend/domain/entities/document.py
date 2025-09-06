@@ -21,6 +21,8 @@ class Document:
     week: Optional[int] = None  # Week number for grouping readings
     error_message: Optional[str] = None
     raw_text: Optional[str] = None  # Store extracted text for quick access
+    summary: Optional[str] = None  # Store document summary
+    key_points: Optional[list] = None  # Store key points from summary
 
     @classmethod
     def create(

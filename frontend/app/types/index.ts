@@ -11,6 +11,9 @@ export interface Document {
   created_at: string;
   updated_at: string;
   metadata?: Record<string, any>;
+  raw_text?: string;
+  summary?: string;
+  key_points?: string[];
 }
 
 export interface DocumentSummary {

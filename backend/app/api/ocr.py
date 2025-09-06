@@ -3,12 +3,7 @@ from fastapi.responses import JSONResponse
 import os
 import tempfile
 from pathlib import Path
-import sys
-
-# Add parent directory to path for imports
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
-from services.ocr_pipeline import OCRPipeline
+from app.services.ocr_pipeline import OCRPipeline
 
 router = APIRouter()
 

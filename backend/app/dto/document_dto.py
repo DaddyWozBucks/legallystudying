@@ -16,6 +16,7 @@ class DocumentResponse(BaseModel):
     id: UUID
     name: str
     path: str
+    content_hash: str
     file_type: str
     size_bytes: int
     processing_status: str
@@ -26,6 +27,9 @@ class DocumentResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     metadata: Dict[str, Any]
+    raw_text: Optional[str] = None
+    summary: Optional[str] = None
+    key_points: Optional[List[str]] = None
     
     class Config:
         from_attributes = True

@@ -26,6 +26,10 @@ CREATE INDEX IF NOT EXISTS idx_documents_file_type ON documents(file_type);
 -- Add raw_text column if it doesn't exist (for existing databases)
 ALTER TABLE documents ADD COLUMN IF NOT EXISTS raw_text TEXT;
 
+-- Add summary and key_points columns for storing document summaries
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS summary TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS key_points JSON;
+
 -- Create prompts table if it doesn't exist
 CREATE TABLE IF NOT EXISTS prompts (
     id VARCHAR PRIMARY KEY,
