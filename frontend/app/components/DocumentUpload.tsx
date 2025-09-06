@@ -24,6 +24,13 @@ export default function DocumentUpload({ onUploadSuccess }: DocumentUploadProps)
     accept: {
       'application/pdf': ['.pdf'],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/msword': ['.doc'],
+      'text/plain': ['.txt'],
+      'image/png': ['.png'],
+      'image/jpeg': ['.jpg', '.jpeg'],
+      'image/tiff': ['.tiff', '.tif'],
+      'image/bmp': ['.bmp'],
+      'image/gif': ['.gif'],
     },
     multiple: false,
   });
@@ -67,7 +74,8 @@ export default function DocumentUpload({ onUploadSuccess }: DocumentUploadProps)
         ) : (
           <div>
             <p className="text-gray-600 mb-2">Drag & drop a document here, or click to select</p>
-            <p className="text-sm text-gray-500">Supports PDF and DOCX files</p>
+            <p className="text-sm text-gray-500">Supports PDF, DOCX, DOC, TXT, and image files (PNG, JPG, TIFF, BMP, GIF)</p>
+            <p className="text-xs text-gray-400 mt-1">Images will be processed with OCR to extract text</p>
           </div>
         )}
       </div>

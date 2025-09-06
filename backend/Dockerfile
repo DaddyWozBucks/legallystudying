@@ -13,6 +13,10 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     gcc \
     g++ \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    poppler-utils \
+    libmagic1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching

@@ -44,6 +44,61 @@ CREATE INDEX IF NOT EXISTS idx_prompts_name ON prompts(name);
 CREATE INDEX IF NOT EXISTS idx_prompts_category ON prompts(category);
 CREATE INDEX IF NOT EXISTS idx_prompts_is_active ON prompts(is_active);
 
+-- Create degrees table if it doesn't exist
+CREATE TABLE IF NOT EXISTS degrees (
+    id VARCHAR PRIMARY KEY,
+    name VARCHAR NOT NULL,
+    abbreviation VARCHAR NOT NULL,
+    description TEXT NOT NULL,
+    prompt_context TEXT NOT NULL,
+    department VARCHAR NOT NULL,
+    duration_years FLOAT DEFAULT 0.0,
+    credit_hours INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT true NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    metadata JSON DEFAULT '{}'
+);
+
+-- Create indexes for degrees table
+CREATE INDEX IF NOT EXISTS idx_degrees_is_active ON degrees(is_active);
+CREATE INDEX IF NOT EXISTS idx_degrees_department ON degrees(department);
+
+-- Create courses table if it doesn't exist
+CREATE TABLE IF NOT EXISTS courses (
+    id VARCHAR PRIMARY KEY,
+    course_number VARCHAR UNIQUE NOT NULL,
+    name VARCHAR NOT NULL,
+    description TEXT NOT NULL,
+    prompt_context TEXT NOT NULL,
+    degree_id VARCHAR,
+    credits INTEGER DEFAULT 0,
+    semester VARCHAR NOT NULL,
+    professor VARCHAR NOT NULL,
+    attributes TEXT[] DEFAULT '{}',
+    prerequisites TEXT[] DEFAULT '{}',
+    learning_objectives TEXT[] DEFAULT '{}',
+    is_active BOOLEAN DEFAULT true NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    metadata JSON DEFAULT '{}',
+    FOREIGN KEY (degree_id) REFERENCES degrees(id) ON DELETE SET NULL
+);
+
+-- Create indexes for courses table
+CREATE INDEX IF NOT EXISTS idx_courses_course_number ON courses(course_number);
+CREATE INDEX IF NOT EXISTS idx_courses_degree_id ON courses(degree_id);
+CREATE INDEX IF NOT EXISTS idx_courses_is_active ON courses(is_active);
+CREATE INDEX IF NOT EXISTS idx_courses_semester ON courses(semester);
+
+-- Add course_id to documents table for linking documents to courses
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS course_id VARCHAR;
+ALTER TABLE documents ADD CONSTRAINT IF NOT EXISTS fk_documents_course 
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_documents_course_id ON documents(course_id);
+
 -- Grant permissions to the application user
 GRANT ALL PRIVILEGES ON TABLE documents TO legaldify;
 GRANT ALL PRIVILEGES ON TABLE prompts TO legaldify;
+GRANT ALL PRIVILEGES ON TABLE degrees TO legaldify;
+GRANT ALL PRIVILEGES ON TABLE courses TO legaldify;

@@ -30,7 +30,7 @@ async def upload_document(
         )
     
     file_extension = Path(file.filename).suffix.lower()
-    allowed_extensions = ['.pdf', '.docx', '.doc', '.txt']
+    allowed_extensions = ['.pdf', '.docx', '.doc', '.txt', '.png', '.jpg', '.jpeg', '.tiff', '.tif', '.bmp', '.gif']
     if file_extension not in allowed_extensions:
         raise HTTPException(
             status_code=400,
