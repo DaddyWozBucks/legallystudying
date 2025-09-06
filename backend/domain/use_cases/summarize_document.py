@@ -6,6 +6,8 @@ import logging
 
 from domain.repositories.document_repository import DocumentRepository, VectorRepository
 from domain.repositories.prompt_repository import PromptRepository
+from domain.repositories.course_repository import CourseRepository
+from domain.repositories.degree_repository import DegreeRepository
 from app.services.llm_service import LLMService
 
 logger = logging.getLogger(__name__)
@@ -25,11 +27,15 @@ class SummarizeDocumentUseCase:
         vector_repo: VectorRepository,
         llm_service: LLMService,
         prompt_repo: PromptRepository = None,
+        course_repo: CourseRepository = None,
+        degree_repo: DegreeRepository = None,
     ):
         self.document_repo = document_repo
         self.vector_repo = vector_repo
         self.llm_service = llm_service
         self.prompt_repo = prompt_repo
+        self.course_repo = course_repo
+        self.degree_repo = degree_repo
     
     async def execute(self, document_id: UUID) -> DocumentSummary:
         """Generate a summary for a document."""
@@ -103,6 +109,23 @@ class SummarizeDocumentUseCase:
             # If still no content, provide basic info
             full_text = f"Document: {document.name}\nType: {document.file_type}\nSize: {document.size_bytes} bytes\n\nContent not available for summarization."
         
+        # Get course and degree context if document is linked to a course
+        course_context = ""
+        degree_context = ""
+        
+        if document.course_id and self.course_repo:
+            course = await self.course_repo.get_course(document.course_id)
+            if course:
+                course_context = course.prompt_context or ""
+                logger.info(f"Using course context for {course.name} ({course.course_number})")
+                
+                # Get degree context if course has a degree
+                if course.degree_id and self.degree_repo:
+                    degree = await self.degree_repo.get_degree(course.degree_id)
+                    if degree:
+                        degree_context = degree.prompt_context or ""
+                        logger.info(f"Using degree context for {degree.name}")
+        
         # Get prompt template from database or use default
         prompt_template = None
         if self.prompt_repo:
@@ -120,7 +143,16 @@ class SummarizeDocumentUseCase:
         
         # Use default if no custom prompt found
         if not prompt_template:
-            prompt_template = """Please provide a comprehensive summary of the following document:
+            # Build context section if we have course/degree context
+            context_section = ""
+            if degree_context or course_context:
+                context_section = "\n\nCONTEXT:\n"
+                if degree_context:
+                    context_section += f"Degree Program: {degree_context}\n"
+                if course_context:
+                    context_section += f"Course: {course_context}\n"
+            
+            prompt_template = """Please provide a comprehensive summary of the following document:{context_section}
 
 {full_text}
 
@@ -138,8 +170,21 @@ KEY POINTS:
 - [Point 3]
 """
         
-        # Format the prompt with the document text
-        summary_prompt = prompt_template.format(full_text=full_text)
+        # Format the prompt with context and document text
+        context_section = ""
+        if degree_context or course_context:
+            context_section = "\n\nCONTEXT:\n"
+            if degree_context:
+                context_section += f"Degree Program: {degree_context}\n"
+            if course_context:
+                context_section += f"Course: {course_context}\n"
+        
+        summary_prompt = prompt_template.format(
+            full_text=full_text,
+            context_section=context_section,
+            degree_context=degree_context,
+            course_context=course_context
+        )
         
         response = await self.llm_service.generate(summary_prompt)
         
