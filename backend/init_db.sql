@@ -97,6 +97,10 @@ ALTER TABLE documents ADD CONSTRAINT IF NOT EXISTS fk_documents_course
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE SET NULL;
 CREATE INDEX IF NOT EXISTS idx_documents_course_id ON documents(course_id);
 
+-- Add week column to documents table for grouping readings by week
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS week INTEGER;
+CREATE INDEX IF NOT EXISTS idx_documents_week ON documents(week);
+
 -- Grant permissions to the application user
 GRANT ALL PRIVILEGES ON TABLE documents TO legaldify;
 GRANT ALL PRIVILEGES ON TABLE prompts TO legaldify;

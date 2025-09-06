@@ -27,6 +27,7 @@ class DocumentModel(Base):
     processing_status = Column(String, default="pending")
     parser_plugin_id = Column(String, nullable=True)
     course_id = Column(String, nullable=True)  # Link to course
+    week = Column(Integer, nullable=True)  # Week number for grouping
     error_message = Column(Text, nullable=True)
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime, nullable=False)
@@ -60,6 +61,7 @@ class SQLDocumentRepository(DocumentRepository):
                 processing_status=document.processing_status,
                 parser_plugin_id=document.parser_plugin_id,
                 course_id=str(document.course_id) if document.course_id else None,
+                week=document.week,
                 error_message=document.error_message,
                 created_at=document.created_at,
                 updated_at=document.updated_at,
@@ -104,6 +106,8 @@ class SQLDocumentRepository(DocumentRepository):
             db_document.path = document.path
             db_document.processing_status = document.processing_status
             db_document.parser_plugin_id = document.parser_plugin_id
+            db_document.course_id = str(document.course_id) if document.course_id else None
+            db_document.week = document.week
             db_document.error_message = document.error_message
             db_document.updated_at = datetime.utcnow()
             db_document.doc_metadata = document.metadata
@@ -140,6 +144,7 @@ class SQLDocumentRepository(DocumentRepository):
             processing_status=db_model.processing_status,
             parser_plugin_id=db_model.parser_plugin_id,
             course_id=UUID(db_model.course_id) if db_model.course_id else None,
+            week=db_model.week if hasattr(db_model, 'week') else None,
             error_message=db_model.error_message,
             created_at=db_model.created_at,
             updated_at=db_model.updated_at,

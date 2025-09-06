@@ -165,6 +165,44 @@ class ApiClient {
       body: JSON.stringify({ variables }),
     });
   }
+
+  // TTS endpoints
+  async generateSpeech(text: string, voiceId?: string): Promise<Blob> {
+    const response = await fetch(`${this.baseUrl}/api/v1/tts/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text, voice_id: voiceId }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`TTS Error: ${response.status}`);
+    }
+
+    return response.blob();
+  }
+
+  async speakDocumentSummary(documentId: string, voiceId?: string): Promise<Blob> {
+    const response = await fetch(`${this.baseUrl}/api/v1/tts/summary/${documentId}/speak`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ voice_id: voiceId }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`TTS Error: ${response.status}`);
+    }
+
+    return response.blob();
+  }
+
+  async getAvailableVoices(): Promise<any> {
+    return this.fetchApi('/api/v1/tts/voices');
+  }
 }
 
 export const api = new ApiClient();
+export const documentApi = api;  // Alias for compatibility

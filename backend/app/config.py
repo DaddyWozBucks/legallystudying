@@ -35,6 +35,11 @@ class Settings(BaseSettings):
     llm_temperature: float = 0.7
     llm_max_tokens: int = 2000
     
+    # ElevenLabs TTS Configuration
+    elevenlabs_api_key: Optional[str] = None
+    elevenlabs_voice_id: str = "21m00Tcm4TlvDq8ikWAM"  # Rachel voice (default)
+    elevenlabs_model_id: str = "eleven_monolingual_v1"
+    
     plugins_directory: Path = Path("./plugins")
     
     max_file_size_mb: int = 100

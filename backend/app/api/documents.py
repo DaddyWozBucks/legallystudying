@@ -19,6 +19,8 @@ async def upload_document(
     request: Request,
     file: UploadFile = File(...),
     parser_plugin_id: Optional[str] = None,
+    course_id: Optional[UUID] = None,
+    week: Optional[int] = None,
 ):
     """Upload and process a document."""
     
@@ -30,7 +32,11 @@ async def upload_document(
         )
     
     file_extension = Path(file.filename).suffix.lower()
-    allowed_extensions = ['.pdf', '.docx', '.doc', '.txt', '.png', '.jpg', '.jpeg', '.tiff', '.tif', '.bmp', '.gif']
+    allowed_extensions = [
+        '.pdf', '.docx', '.doc', '.txt', 
+        '.png', '.jpg', '.jpeg', '.tiff', '.tif', '.bmp', '.gif',
+        '.epub', '.mobi', '.azw', '.azw3', '.fb2', '.lit', '.pdb'
+    ]
     if file_extension not in allowed_extensions:
         raise HTTPException(
             status_code=400,
@@ -51,7 +57,13 @@ async def upload_document(
             chunking_service=request.app.state.chunking_service,
         )
         
-        document = await use_case.execute(tmp_path, parser_plugin_id, original_name=file.filename)
+        document = await use_case.execute(
+            tmp_path, 
+            parser_plugin_id, 
+            original_name=file.filename,
+            course_id=course_id,
+            week=week
+        )
         
         return DocumentResponse.from_orm(document)
         
@@ -87,10 +99,23 @@ async def ingest_document(
 
 
 @router.get("/", response_model=DocumentListResponse)
-async def list_documents(request: Request):
-    """List all documents."""
+async def list_documents(
+    request: Request,
+    course_id: Optional[UUID] = None,
+    week: Optional[int] = None
+):
+    """List all documents, optionally filtered by course and/or week."""
     
     documents = await request.app.state.document_repo.get_all_documents()
+    
+    # Filter by course_id if provided
+    if course_id:
+        documents = [d for d in documents if d.course_id == course_id]
+    
+    # Filter by week if provided
+    if week is not None:
+        documents = [d for d in documents if d.week == week]
+    
     return DocumentListResponse(
         documents=[DocumentResponse.from_orm(doc) for doc in documents],
         total=len(documents),
@@ -136,6 +161,8 @@ async def summarize_document(request: Request, document_id: UUID):
         vector_repo=request.app.state.vector_repo,
         llm_service=request.app.state.llm_service,
         prompt_repo=request.app.state.prompt_repo,
+        course_repo=request.app.state.course_repo,
+        degree_repo=request.app.state.degree_repo,
     )
     
     try:
@@ -170,6 +197,8 @@ async def answer_question(
         llm_service=request.app.state.llm_service,
         embedding_service=request.app.state.embedding_service,
         prompt_repo=request.app.state.prompt_repo,
+        course_repo=request.app.state.course_repo,
+        degree_repo=request.app.state.degree_repo,
     )
     
     try:

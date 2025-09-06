@@ -22,7 +22,14 @@ class ProcessDocumentUseCase:
         self.embedding_service = embedding_service
         self.chunking_service = chunking_service
 
-    async def execute(self, file_path: str, parser_plugin_id: Optional[str] = None, original_name: Optional[str] = None) -> Document:
+    async def execute(
+        self, 
+        file_path: str, 
+        parser_plugin_id: Optional[str] = None, 
+        original_name: Optional[str] = None,
+        course_id: Optional[UUID] = None,
+        week: Optional[int] = None
+    ) -> Document:
         path = Path(file_path)
         if not path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
@@ -39,6 +46,10 @@ class ProcessDocumentUseCase:
             file_type=path.suffix.lower(),
             size_bytes=path.stat().st_size,
         )
+        
+        # Set course and week if provided
+        document.course_id = course_id
+        document.week = week
         
         saved_document = await self.document_repo.save_document(document)
         

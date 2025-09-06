@@ -32,12 +32,19 @@ const api = axios.create({
 });
 
 export const documentApi = {
-  async uploadDocument(file: File, parserPluginId?: string): Promise<Document> {
+  async uploadDocument(file: File, parserPluginId?: string, courseId?: string, week?: number): Promise<Document> {
     const formData = new FormData();
     formData.append('file', file);
     
-    const params = parserPluginId ? `?parser_plugin_id=${parserPluginId}` : '';
-    const response = await api.post(`/api/v1/documents/upload${params}`, formData, {
+    const params = new URLSearchParams();
+    if (parserPluginId) params.append('parser_plugin_id', parserPluginId);
+    if (courseId) params.append('course_id', courseId);
+    if (week !== undefined) params.append('week', week.toString());
+    
+    const queryString = params.toString();
+    const url = queryString ? `/api/v1/documents/upload?${queryString}` : '/api/v1/documents/upload';
+    
+    const response = await api.post(url, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -116,5 +123,63 @@ export const documentApi = {
   async updatePrompt(id: string, data: any): Promise<any> {
     const response = await api.put(`/api/v1/prompts/${id}`, data);
     return response.data;
+  },
+};
+
+export const degreeApi = {
+  async getDegrees(): Promise<any[]> {
+    const response = await api.get('/api/v1/degrees/');
+    return response.data.degrees || [];
+  },
+
+  async getDegree(id: string): Promise<any> {
+    const response = await api.get(`/api/v1/degrees/${id}`);
+    return response.data;
+  },
+
+  async createDegree(data: any): Promise<any> {
+    const response = await api.post('/api/v1/degrees/', data);
+    return response.data;
+  },
+
+  async updateDegree(id: string, data: any): Promise<any> {
+    const response = await api.put(`/api/v1/degrees/${id}`, data);
+    return response.data;
+  },
+
+  async deleteDegree(id: string): Promise<void> {
+    await api.delete(`/api/v1/degrees/${id}`);
+  },
+};
+
+export const courseApi = {
+  async getCourses(degreeId?: string): Promise<any[]> {
+    const params = degreeId ? `?degree_id=${degreeId}` : '';
+    const response = await api.get(`/api/v1/courses/${params}`);
+    return response.data.courses || [];
+  },
+
+  async getCourse(id: string): Promise<any> {
+    const response = await api.get(`/api/v1/courses/${id}`);
+    return response.data;
+  },
+
+  async getCourseByNumber(courseNumber: string): Promise<any> {
+    const response = await api.get(`/api/v1/courses/by-number/${courseNumber}`);
+    return response.data;
+  },
+
+  async createCourse(data: any): Promise<any> {
+    const response = await api.post('/api/v1/courses/', data);
+    return response.data;
+  },
+
+  async updateCourse(id: string, data: any): Promise<any> {
+    const response = await api.put(`/api/v1/courses/${id}`, data);
+    return response.data;
+  },
+
+  async deleteCourse(id: string): Promise<void> {
+    await api.delete(`/api/v1/courses/${id}`);
   },
 };

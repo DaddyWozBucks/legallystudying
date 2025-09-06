@@ -5,6 +5,7 @@ import { Document } from '../types';
 import { documentApi } from '../lib/api';
 import { summaryStore } from '../lib/summaryStore';
 import PromptManager from './PromptManager';
+import TTSPlayer from './TTSPlayer';
 import { 
   FiX, 
   FiFile, 
@@ -331,6 +332,13 @@ export default function DocumentDetail({
                   </div>
                 ) : (
                   <>
+                    <div className="mb-4">
+                      <TTSPlayer 
+                        text={summary.summary}
+                        documentId={document.id}
+                        className="mb-4"
+                      />
+                    </div>
                     <div>
                       <p className="text-gray-700 whitespace-pre-wrap">{summary.summary}</p>
                     </div>

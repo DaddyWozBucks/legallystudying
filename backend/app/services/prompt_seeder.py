@@ -11,7 +11,7 @@ DEFAULT_PROMPTS = [
         "name": "document_summary",
         "description": "Generate a comprehensive summary of a document",
         "category": "summary",
-        "template": """Please provide a comprehensive summary of the following document:
+        "template": """Please provide a comprehensive summary of the following document:{context_section}
 
 {full_text}
 
@@ -32,7 +32,7 @@ KEY POINTS:
         "name": "document_qa",
         "description": "Answer questions about a document",
         "category": "qa",
-        "template": """Based on the following document context:
+        "template": """Based on the following document context:{educational_context}
 
 {context}
 
@@ -44,7 +44,7 @@ Provide a clear, detailed answer based only on the information in the document. 
         "name": "flashcard_generation",
         "description": "Generate flashcards from document content",
         "category": "flashcards",
-        "template": """Based on the following document content:
+        "template": """Based on the following document content:{educational_context}
 
 {content}
 

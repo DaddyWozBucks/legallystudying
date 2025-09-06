@@ -6,6 +6,8 @@ from datetime import datetime
 from domain.repositories.document_repository import DocumentRepository
 from infrastructure.database.chroma_repository import ChromaVectorRepository
 from domain.repositories.prompt_repository import PromptRepository
+from domain.repositories.course_repository import CourseRepository
+from domain.repositories.degree_repository import DegreeRepository
 from app.services.llm_service import LLMService
 from app.services.embedding_service import EmbeddingService
 
@@ -26,12 +28,16 @@ class AnswerQuestionUseCase:
         llm_service: LLMService,
         embedding_service: EmbeddingService,
         prompt_repo: Optional[PromptRepository] = None,
+        course_repo: Optional[CourseRepository] = None,
+        degree_repo: Optional[DegreeRepository] = None,
     ):
         self.document_repo = document_repo
         self.vector_repo = vector_repo
         self.llm_service = llm_service
         self.embedding_service = embedding_service
         self.prompt_repo = prompt_repo
+        self.course_repo = course_repo
+        self.degree_repo = degree_repo
     
     async def execute(self, document_id: UUID, question: str) -> Answer:
         """Answer a question about a specific document."""
@@ -69,6 +75,21 @@ class AnswerQuestionUseCase:
                 generated_at=datetime.utcnow()
             )
         
+        # Get course and degree context if document is linked to a course
+        course_context = ""
+        degree_context = ""
+        
+        if document.course_id and self.course_repo:
+            course = await self.course_repo.get_course(document.course_id)
+            if course:
+                course_context = course.prompt_context or ""
+                
+                # Get degree context if course has a degree
+                if course.degree_id and self.degree_repo:
+                    degree = await self.degree_repo.get_degree(course.degree_id)
+                    if degree:
+                        degree_context = degree.prompt_context or ""
+        
         # Get prompt template
         prompt_template = None
         if self.prompt_repo:
@@ -85,9 +106,18 @@ class AnswerQuestionUseCase:
         
         # Use default prompt if no custom prompt found
         if not prompt_template:
-            prompt_template = """Based on the following context from the document, please answer the question.
+            # Build educational context section if available
+            educational_context = ""
+            if degree_context or course_context:
+                educational_context = "\n\nEducational Context:\n"
+                if degree_context:
+                    educational_context += f"Degree Program: {degree_context}\n"
+                if course_context:
+                    educational_context += f"Course: {course_context}\n"
+            
+            prompt_template = """Based on the following context from the document, please answer the question.{educational_context}
 
-Context:
+Document Context:
 {context}
 
 Question: {question}
@@ -95,9 +125,20 @@ Question: {question}
 Please provide a clear and concise answer based only on the information provided in the context. If the context doesn't contain enough information to answer the question, please state that clearly."""
         
         # Format prompt
+        educational_context = ""
+        if degree_context or course_context:
+            educational_context = "\n\nEducational Context:\n"
+            if degree_context:
+                educational_context += f"Degree Program: {degree_context}\n"
+            if course_context:
+                educational_context += f"Course: {course_context}\n"
+        
         formatted_prompt = prompt_template.format(
             context=context,
-            question=question
+            question=question,
+            educational_context=educational_context,
+            degree_context=degree_context,
+            course_context=course_context
         )
         
         # Generate answer

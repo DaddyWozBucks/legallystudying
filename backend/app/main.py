@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
 
-from app.api import documents, queries, plugins, health, extension, prompts, degrees, courses
+from app.api import documents, queries, plugins, health, extension, prompts, degrees, courses, tts
 from app.services.startup_service import StartupService
 from app.config import settings
 
@@ -69,6 +69,7 @@ app.include_router(extension.router, prefix="/api/v1/extension", tags=["extensio
 app.include_router(prompts.router, prefix="/api/v1/prompts", tags=["prompts"])
 app.include_router(degrees.router, prefix="/api/v1/degrees", tags=["degrees"])
 app.include_router(courses.router, prefix="/api/v1/courses", tags=["courses"])
+app.include_router(tts.router, prefix="/api/v1/tts", tags=["tts"])
 
 
 @app.get("/")

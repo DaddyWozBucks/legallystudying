@@ -7,6 +7,8 @@ from uuid import UUID
 class DocumentUploadRequest(BaseModel):
     file_path: str = Field(..., description="Path to the document file")
     parser_plugin_id: Optional[str] = Field(None, description="Specific parser plugin to use")
+    course_id: Optional[UUID] = Field(None, description="Course this document belongs to")
+    week: Optional[int] = Field(None, description="Week number for course reading")
     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
 
@@ -18,6 +20,8 @@ class DocumentResponse(BaseModel):
     size_bytes: int
     processing_status: str
     parser_plugin_id: Optional[str]
+    course_id: Optional[UUID]
+    week: Optional[int]
     error_message: Optional[str]
     created_at: datetime
     updated_at: datetime

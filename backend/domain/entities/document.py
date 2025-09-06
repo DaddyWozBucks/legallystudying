@@ -18,6 +18,7 @@ class Document:
     parser_plugin_id: Optional[str] = None
     processing_status: str = "pending"
     course_id: Optional[UUID] = None  # Link to associated course
+    week: Optional[int] = None  # Week number for grouping readings
     error_message: Optional[str] = None
     raw_text: Optional[str] = None  # Store extracted text for quick access
 
