@@ -66,7 +66,7 @@ class SQLDocumentRepository(DocumentRepository):
                 created_at=document.created_at,
                 updated_at=document.updated_at,
                 doc_metadata=document.metadata,
-                raw_text=document.raw_text,
+                raw_text=json.dumps(document.raw_text) if isinstance(document.raw_text, (dict, list)) else document.raw_text,
             )
             session.add(db_document)
             session.commit()
@@ -111,7 +111,12 @@ class SQLDocumentRepository(DocumentRepository):
             db_document.error_message = document.error_message
             db_document.updated_at = datetime.utcnow()
             db_document.doc_metadata = document.metadata
-            db_document.raw_text = document.raw_text
+            # Ensure raw_text is a string, not a dict or list
+            if isinstance(document.raw_text, (dict, list)):
+                import json
+                db_document.raw_text = json.dumps(document.raw_text)
+            else:
+                db_document.raw_text = document.raw_text
             
             session.commit()
             session.refresh(db_document)

@@ -57,7 +57,18 @@ class ProcessDocumentUseCase:
             saved_document.processing_status = "processing"
             await self.document_repo.update_document(saved_document)
             
-            text_content = await self.parser_service.parse(file_path, parser_plugin_id)
+            parsed_content = await self.parser_service.parse(file_path, parser_plugin_id)
+            
+            # Extract text content from parsed results
+            if isinstance(parsed_content, list):
+                # Combine all text content from parsed chunks
+                text_parts = []
+                for item in parsed_content:
+                    if isinstance(item, dict) and 'text_content' in item:
+                        text_parts.append(item['text_content'])
+                text_content = '\n'.join(text_parts)
+            else:
+                text_content = str(parsed_content)
             
             # Save the raw text content to the document for quick access
             saved_document.raw_text = text_content[:500000] if text_content else None  # Limit to 500K chars for DB storage

@@ -9,6 +9,10 @@ mkdir -p /app/data/chroma_db /app/plugins /app/logs /app/uploads
 # Wait for PostgreSQL to be ready
 if [[ "$DATABASE_URL" == postgresql* ]]; then
     echo "Waiting for PostgreSQL to be ready..."
+    # Extract password from DATABASE_URL if POSTGRES_PASSWORD is not set
+    if [ -z "$POSTGRES_PASSWORD" ]; then
+        export POSTGRES_PASSWORD="legaldify_secure_password"
+    fi
     export PGPASSWORD=$POSTGRES_PASSWORD
     until pg_isready -h postgres -p 5432 -U legaldify; do
         echo "PostgreSQL is unavailable - sleeping"
