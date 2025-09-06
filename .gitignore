@@ -182,6 +182,9 @@ coverage/
 .env.*
 !.env.example
 
+# Test scripts
+test_deployment.sh
+
 # Secrets
 *.pem
 *.key

@@ -66,7 +66,7 @@ class SQLDocumentRepository(DocumentRepository):
                 created_at=document.created_at,
                 updated_at=document.updated_at,
                 doc_metadata=document.metadata,
-                raw_text=json.dumps(document.raw_text) if isinstance(document.raw_text, (dict, list)) else document.raw_text,
+                raw_text=(json.dumps(document.raw_text) if isinstance(document.raw_text, (dict, list)) else document.raw_text or '').replace('\x00', ''),
             )
             session.add(db_document)
             session.commit()
@@ -113,10 +113,15 @@ class SQLDocumentRepository(DocumentRepository):
             db_document.doc_metadata = document.metadata
             # Ensure raw_text is a string, not a dict or list
             if isinstance(document.raw_text, (dict, list)):
-                import json
-                db_document.raw_text = json.dumps(document.raw_text)
+                raw_text = json.dumps(document.raw_text)
             else:
-                db_document.raw_text = document.raw_text
+                raw_text = document.raw_text
+            
+            # Clean null bytes that PostgreSQL cannot handle
+            if raw_text:
+                db_document.raw_text = raw_text.replace('\x00', '')
+            else:
+                db_document.raw_text = raw_text
             
             session.commit()
             session.refresh(db_document)

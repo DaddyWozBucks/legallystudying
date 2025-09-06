@@ -60,15 +60,22 @@ class ProcessDocumentUseCase:
             parsed_content = await self.parser_service.parse(file_path, parser_plugin_id)
             
             # Extract text content from parsed results
-            if isinstance(parsed_content, list):
+            if parsed_content is None:
+                text_content = ""
+            elif isinstance(parsed_content, list):
                 # Combine all text content from parsed chunks
                 text_parts = []
                 for item in parsed_content:
                     if isinstance(item, dict) and 'text_content' in item:
-                        text_parts.append(item['text_content'])
+                        # Clean null bytes from text
+                        cleaned_text = item['text_content'].replace('\x00', '') if item['text_content'] else ''
+                        text_parts.append(cleaned_text)
                 text_content = '\n'.join(text_parts)
             else:
-                text_content = str(parsed_content)
+                text_content = str(parsed_content) if parsed_content else ""
+            
+            # Clean null bytes from the entire text content
+            text_content = text_content.replace('\x00', '') if text_content else ""
             
             # Save the raw text content to the document for quick access
             saved_document.raw_text = text_content[:500000] if text_content else None  # Limit to 500K chars for DB storage
