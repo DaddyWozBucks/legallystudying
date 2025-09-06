@@ -1,0 +1,87 @@
+# Filename: rag_summary_workflow.yml
+version: '1'
+app:
+  description: 'A workflow to summarize documents from a knowledge base.'
+  icon: 'U+1F4DD'
+  icon_background: '#FFEAD5'
+  mode: workflow
+  name: 'RAG Document Summarizer'
+workflow:
+  features:
+    file_upload:
+      image:
+        enabled: false
+        number_limits: 5
+        transfer_methods:
+          - local_file
+          - remote_url
+    opening_statement: 'Hello! What topic would you like me to summarize from your documents?'
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+  graph:
+    edges:
+      - id: start-to-knowledge
+        source: start
+        target: knowledge_retrieval
+      - id: knowledge-to-llm
+        source: knowledge_retrieval
+        target: llm
+      - id: llm-to-answer
+        source: llm
+        target: answer
+    nodes:
+      - id: start
+        type: start
+        data:
+          desc: 'Workflow starts here, accepting user query.'
+          title: 'Start'
+          variables:
+            - label: Topic
+              max_length: 500
+              required: true
+              type: string
+              variable: query
+      - id: knowledge_retrieval
+        type: knowledge-retrieval
+        data:
+          query_variable_selector:
+            - start
+            - query
+          retrieval_config:
+            datasets:
+              datasets:
+                - dataset_id: YOUR_KNOWLEDGE_BASE_ID # IMPORTANT: Replace with your actual Knowledge Base ID
+            retrieval_mode: single
+          title: 'Knowledge Retrieval'
+      - id: llm
+        type: llm
+        data:
+          context:
+            enabled: true
+            variable_selector:
+              - knowledge_retrieval
+          model:
+            completion_params:
+              temperature: 0.7
+            name: YOUR_MODEL_PROVIDER:YOUR_MODEL_NAME # e.g., ollama_chat:llama3.1
+            provider: ollama_chat # Or your preferred provider
+          prompt_template:
+            - role: system
+              text: |
+                You are an expert legal research assistant. Your task is to provide a concise and accurate summary based ONLY on the provided document excerpts.
+
+                Instructions:
+                1. Read the context carefully.
+                2. Summarize the main arguments, key facts, and legal principles.
+                3. For every piece of information, you MUST cite the source document it came from.
+                4. If the context is insufficient to answer, state that the information is not available in the provided documents.
+            - role: user
+              text: 'Please summarize the key points about the following topic: {{#start.query#}}'
+          title: 'LLM'
+      - id: answer
+        type: answer
+        data:
+          answer: '{{#llm.text#}}'
+          title: 'Answer'

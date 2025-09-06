@@ -1,0 +1,177 @@
+services:
+  # ChromaDB Vector Database Service
+  chromadb:
+    image: chromadb/chroma:0.5.23
+    container_name: legaldify-chromadb
+    ports:
+      - "8001:8000"
+    environment:
+      - ANONYMIZED_TELEMETRY=false
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+    volumes:
+      - chroma_data:/chroma/chroma
+    networks:
+      - legaldify-network
+    restart: unless-stopped
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: legaldify-postgres
+    environment:
+      - POSTGRES_USER=legaldify
+      - POSTGRES_PASSWORD=legaldify_secure_password
+      - POSTGRES_DB=legaldify
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init_db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - legaldify-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U legaldify"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and task queue
+  redis:
+    image: redis:7-alpine
+    container_name: legaldify-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - legaldify-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: legaldify-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DATABASE_URL=postgresql://legaldify:legaldify_secure_password@postgres:5432/legaldify
+      - REDIS_URL=redis://redis:6379/0
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - CHROMA_PERSIST_DIRECTORY=/app/data/chroma_db
+      - CHROMA_COLLECTION_NAME=legal_documents
+      - EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+      - LLM_PROVIDER=${LLM_PROVIDER:-openrouter}
+      - LLM_MODEL=${LLM_MODEL:-anthropic/claude-3-haiku}
+      - LLM_API_KEY=${LLM_API_KEY}
+      - LLM_TEMPERATURE=0.7
+      - LLM_MAX_TOKENS=8196
+      - OPENROUTER_SITE_URL=http://backend:8000
+      - OPENROUTER_APP_NAME=LegalDify
+      - CHUNK_SIZE=1000
+      - CHUNK_OVERLAP=200
+      - MAX_FILE_SIZE_MB=100
+      - LOG_LEVEL=info
+    volumes:
+      - ./backend/plugins:/app/plugins
+      - ./data:/app/data
+      - ./backend/app:/app/app:ro
+      - ./backend/domain:/app/domain:ro
+      - ./backend/infrastructure:/app/infrastructure:ro
+      - uploaded_documents:/app/uploads
+    networks:
+      - legaldify-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      chromadb:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Next.js Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: legaldify-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+    networks:
+      - legaldify-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: legaldify-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - legaldify-network
+    restart: unless-stopped
+
+  # pgAdmin for database management (optional, can be removed in production)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: legaldify-pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@legaldify.local
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_CONFIG_SERVER_MODE=False
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+    ports:
+      - "5050:80"
+    networks:
+      - legaldify-network
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    profiles:
+      - dev
+
+networks:
+  legaldify-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  chroma_data:
+    driver: local
+  redis_data:
+    driver: local
+  uploaded_documents:
+    driver: local
+  nginx_logs:
+    driver: local

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>LegalDify Page Capture</title>
+  <link rel="stylesheet" href="css/popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>LegalDify</h1>
+      <p class="subtitle">Page Capture</p>
+    </div>
+    
+    <div class="settings">
+      <div class="setting-group">
+        <label for="apiUrl">API URL:</label>
+        <input type="text" id="apiUrl" value="http://localhost:8000" />
+      </div>
+      
+      <div class="setting-group">
+        <label for="authToken">Auth Token:</label>
+        <input type="password" id="authToken" value="legal-dify-extension-2024" />
+      </div>
+    </div>
+    
+    <div class="content" id="content">
+      <div class="info-section">
+        <div class="info-item">
+          <span class="label">Current Page:</span>
+          <span id="pageTitle" class="value">Loading...</span>
+        </div>
+        <div class="info-item">
+          <span class="label">URL:</span>
+          <span id="pageUrl" class="value truncate">Loading...</span>
+        </div>
+      </div>
+      
+      <button id="captureBtn" class="btn btn-primary">
+        <span class="btn-text">Capture Page Content</span>
+        <span class="spinner" style="display: none;"></span>
+      </button>
+      
+      <div id="status" class="status"></div>
+    </div>
+    
+    <div class="footer">
+      <button id="settingsBtn" class="btn-link">Settings</button>
+      <button id="saveSettingsBtn" class="btn-link" style="display: none;">Save Settings</button>
+    </div>
+  </div>
+  
+  <script src="js/popup.js"></script>
+</body>
+</html>
