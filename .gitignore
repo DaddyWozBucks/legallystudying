@@ -181,7 +181,6 @@ coverage/
 .env
 .env.*
 !.env.example
-!.env.docker
 
 # Secrets
 *.pem

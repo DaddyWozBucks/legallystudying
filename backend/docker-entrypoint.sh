@@ -16,6 +16,10 @@ if [[ "$DATABASE_URL" == postgresql* ]]; then
     done
     echo "PostgreSQL is ready!"
     
+    # Run database initialization/migration script
+    echo "Running database initialization script..."
+    PGPASSWORD=$POSTGRES_PASSWORD psql -h postgres -U legaldify -d legaldify -f /app/init_db.sql || echo "Database initialization completed or already initialized"
+    
     # Run database migrations if alembic is configured
     if [ -f "alembic.ini" ]; then
         echo "Running database migrations..."
