@@ -93,8 +93,14 @@ CREATE INDEX IF NOT EXISTS idx_courses_semester ON courses(semester);
 
 -- Add course_id to documents table for linking documents to courses
 ALTER TABLE documents ADD COLUMN IF NOT EXISTS course_id VARCHAR;
-ALTER TABLE documents ADD CONSTRAINT IF NOT EXISTS fk_documents_course 
-    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE SET NULL;
+-- Add foreign key constraint (will skip if already exists)
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_documents_course') THEN
+        ALTER TABLE documents ADD CONSTRAINT fk_documents_course 
+            FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE SET NULL;
+    END IF;
+END $$;
 CREATE INDEX IF NOT EXISTS idx_documents_course_id ON documents(course_id);
 
 -- Add week column to documents table for grouping readings by week

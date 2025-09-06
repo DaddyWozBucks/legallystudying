@@ -4,6 +4,7 @@ import tempfile
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 import re
+from bs4 import BeautifulSoup
 
 from infrastructure.plugins.base_plugin import IDataSourcePlugin
 
@@ -45,7 +46,6 @@ class MOBIParser(IDataSourcePlugin):
                     html_content = f.read()
                 
                 # Extract text from HTML
-                from bs4 import BeautifulSoup
                 soup = BeautifulSoup(html_content, 'html.parser')
                 
                 # Extract metadata if available
