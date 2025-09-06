@@ -26,6 +26,7 @@ class DocumentModel(Base):
     size_bytes = Column(Integer, nullable=False)
     processing_status = Column(String, default="pending")
     parser_plugin_id = Column(String, nullable=True)
+    course_id = Column(String, nullable=True)  # Link to course
     error_message = Column(Text, nullable=True)
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime, nullable=False)
@@ -58,6 +59,7 @@ class SQLDocumentRepository(DocumentRepository):
                 size_bytes=document.size_bytes,
                 processing_status=document.processing_status,
                 parser_plugin_id=document.parser_plugin_id,
+                course_id=str(document.course_id) if document.course_id else None,
                 error_message=document.error_message,
                 created_at=document.created_at,
                 updated_at=document.updated_at,
@@ -137,6 +139,7 @@ class SQLDocumentRepository(DocumentRepository):
             size_bytes=db_model.size_bytes,
             processing_status=db_model.processing_status,
             parser_plugin_id=db_model.parser_plugin_id,
+            course_id=UUID(db_model.course_id) if db_model.course_id else None,
             error_message=db_model.error_message,
             created_at=db_model.created_at,
             updated_at=db_model.updated_at,

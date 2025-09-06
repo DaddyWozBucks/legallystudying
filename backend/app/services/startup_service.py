@@ -16,6 +16,8 @@ from infrastructure.plugins.plugin_manager import PluginManager
 from infrastructure.database.chroma_repository import ChromaVectorRepository
 from infrastructure.database.document_repository_impl import SQLDocumentRepository
 from infrastructure.database.prompt_repository_impl import SQLPromptRepository
+from infrastructure.database.degree_repository_impl import SQLDegreeRepository
+from infrastructure.database.course_repository_impl import SQLCourseRepository
 from app.services.prompt_seeder import PromptSeeder
 
 logger = logging.getLogger(__name__)
@@ -29,6 +31,8 @@ class StartupService:
         self.document_repo = None
         self.vector_repo = None
         self.prompt_repo = None
+        self.degree_repo = None
+        self.course_repo = None
         self.embedding_service = None
         self.llm_service = None
         self.parser_service = None
@@ -66,6 +70,12 @@ class StartupService:
         
         self.prompt_repo = SQLPromptRepository(settings.database_url)
         await self.prompt_repo.initialize()
+        
+        self.degree_repo = SQLDegreeRepository(settings.database_url)
+        await self.degree_repo.initialize()
+        
+        self.course_repo = SQLCourseRepository(settings.database_url)
+        await self.course_repo.initialize()
         
         # Seed default prompts
         seeder = PromptSeeder(self.prompt_repo)

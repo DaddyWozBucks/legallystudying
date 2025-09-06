@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
 
-from app.api import documents, queries, plugins, health, extension, prompts
+from app.api import documents, queries, plugins, health, extension, prompts, degrees, courses
 from app.services.startup_service import StartupService
 from app.config import settings
 
@@ -22,6 +22,8 @@ async def lifespan(app: FastAPI):
     app.state.document_repo = startup_service.document_repo
     app.state.vector_repo = startup_service.vector_repo
     app.state.prompt_repo = startup_service.prompt_repo
+    app.state.degree_repo = startup_service.degree_repo
+    app.state.course_repo = startup_service.course_repo
     app.state.embedding_service = startup_service.embedding_service
     app.state.llm_service = startup_service.llm_service
     app.state.parser_service = startup_service.parser_service
@@ -65,6 +67,8 @@ app.include_router(queries.router, prefix="/api/v1/queries", tags=["queries"])
 app.include_router(plugins.router, prefix="/api/v1/plugins", tags=["plugins"])
 app.include_router(extension.router, prefix="/api/v1/extension", tags=["extension"])
 app.include_router(prompts.router, prefix="/api/v1/prompts", tags=["prompts"])
+app.include_router(degrees.router, prefix="/api/v1/degrees", tags=["degrees"])
+app.include_router(courses.router, prefix="/api/v1/courses", tags=["courses"])
 
 
 @app.get("/")
