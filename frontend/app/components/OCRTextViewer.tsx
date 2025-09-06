@@ -14,7 +14,7 @@ import {
   Alert,
   AlertDescription,
   Progress
-} from '@/components/ui';
+} from './ui';
 import { 
   FileText, 
   Download, 

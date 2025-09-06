@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { OCRTextViewer } from '@/components/OCRTextViewer';
+import { OCRTextViewer } from './components/OCRTextViewer';
 import { 
   Card, 
   CardContent, 
@@ -8,7 +8,7 @@ import {
   Button,
   Alert,
   AlertDescription
-} from '@/components/ui';
+} from './components/ui';
 import { 
   Upload, 
   FileText, 

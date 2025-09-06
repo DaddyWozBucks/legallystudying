@@ -32,7 +32,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
 COPY . .
 
 # Create necessary directories
-RUN mkdir -p /app/plugins /app/data/chroma_db /app/logs /app/uploads
+RUN mkdir -p /app/plugins /app/data/chroma_db /app/logs /app/uploads /app/ocr_output/extracted_text /app/ocr_output/logs
 
 # Download the embedding model during build
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')"
